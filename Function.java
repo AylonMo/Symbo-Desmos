@@ -1,33 +1,23 @@
 public class Function {
-    private double a0;
-	private double a1;
-	private double a2;
-	private double a3;
-	private double a4;
-	private int degree;
+    private double[] coefficients;
 
-
-    public Function(double a0, double a1, double a2, double a3, double a4) {
-        this.a0 = a0;
-		this.a1 = a1;
-		this.a2 = a2;
-		this.a3 = a3;
-		this.a4 = a4;
-
-        this.degree = 0;
-		if (a1 != 0) this.degree = 1;
-		if (a2 != 0) this.degree = 2;
-		if (a3 != 0) this.degree = 3;
-		if (a4 != 0) this.degree = 4;
+    public Function(double[] coefficients) {
+        this.coefficients = coefficients;
     }
 
 
     public String toString() {
-		return "f(x) = " + a4 + ("*x^4 + ") + a3 + ("*x^3 + ") + a2 + ("*x^2 + ") + a1 + ("*x + ") + a0;
+        String repr = "f(x) = ";
+        for (int i = coefficients.length - 1; i >= 0; i--)
+            repr += coefficients[i] + " * x^" + i + " + ";
+        return repr.substring(0, repr.length() - 3);
 	}
 
-    public double calcValue(double x){
-		return a4 * Math.pow(x, 4) + a3 * Math.pow(x, 3) + a2 * Math.pow(x, 2) + a1 * x + a0;
+    public double calcValue(double x) {
+        double result = 0;
+		for (int i = 0; i < coefficients.length; i++)
+			result += coefficients[i] * Math.pow(x, i);
+		return result;
 	}
 
     public void printPoint(double x) {
@@ -35,6 +25,10 @@ public class Function {
 	}
 
     public Function calcDerivative() {
-		return new Function(a1, 2 * a2, 3 * a3, 4 * a4, 0);
+        double[] derCoeffs = new double[coefficients.length - 1];
+		for (int i = 0; i < derCoeffs.length; i++)
+			derCoeffs[i] = (i + 1) * coefficients[i + 1];
+		return new Function(derCoeffs);
 	}
+
 }

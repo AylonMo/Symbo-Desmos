@@ -5,17 +5,37 @@ public class FunctionAnalysis {
 	private Function func;
 
 	public FunctionAnalysis() {
-        double a0 = this.getCoefficient(0);
-        double a1 = this.getCoefficient(1);
-        double a2 = this.getCoefficient(2);
-        double a3 = this.getCoefficient(3);
-        double a4 = this.getCoefficient(4);
-		this.func = new Function(a0, a1, a2, a3, a4);
+        int degree = getDegree();
+        double[] coefficients = new double[getDegree()];
+        
+        for (int i = 0; i < degree; i++)
+            coefficients[i] = getCoefficient(i);
+		this.func = new Function(coefficients);
 	}
 
     public String toString() {
 		return func.toString();
 	}
+
+
+    public int getDegree() {
+		boolean invalidInput = true;
+        int degree = 0;
+        System.out.println("Please enter the degree of the polynomial function to analize: ");
+
+        while (invalidInput) {
+            String input = scan.nextLine();
+
+            try {
+                degree = Integer.parseInt(input);
+                invalidInput = false;
+            } catch (NumberFormatException e) {
+                System.out.print("This is not a valid value. Please enter an integer for the degree: ");
+            }
+        }
+        
+        return degree;
+    }
 
 
 	public double getCoefficient(int coeffIndex) {
