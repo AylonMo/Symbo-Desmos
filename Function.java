@@ -14,6 +14,7 @@ public class Function {
 
     // —————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
+    // a method to get the degree of the polynomial function
     public int getDegree() {
         return coefficients.length - 1;
     }
@@ -93,7 +94,7 @@ public class Function {
     }
 
     // a method to get a sorted copy of an array without repetition of elements
-    public double[] modifyArray(double[] array) {
+    public double[] modifyArray(double[] array, boolean round) {
         double[] result = new double[array.length];
         int newLength = 0;
         boolean zeroAppeared = false;
@@ -101,15 +102,12 @@ public class Function {
         for (int i = 0; i < array.length; i++) {
             // special case because the default value of double is 0
             if (array[i] == 0 && !zeroAppeared) {
-                zeroAppeared = true;
-                // result[newLength] = array[i];
-                newLength++;
+                zeroAppeared = true; newLength++;
             }
-            // if we already took care of 0
+            // if the element didn't appear yet (and is not 0)
             else if (indexInArray(result, array[i]) == -1) {
-                    // add the rounded value to the array
-                    result[newLength] = array[i];
-                    newLength++;
+                result[newLength] = (round)? (smartRounding(array[i])):(array[i]);
+                newLength++;
             }
         }
         
@@ -272,11 +270,11 @@ public class Function {
         String[] negatives = new String[points.length];
         int numOfPos = 0; int numOfNeg = 0;
         
-        points = modifyArray(points);
+        points = modifyArray(points, false);
         String interval; double substitue;
 
         for (int i = 0; i <= points.length; i++) {
-            // check whether the interval is left, right or in the middle and set the substitution
+            // check the interval type and set the substitution accordingly
             if (i == 0) {
                 interval = ("x < " + smartRounding(points[i]));
                 substitue = points[i] - 1;
