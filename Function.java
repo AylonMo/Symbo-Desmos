@@ -3,11 +3,12 @@ import java.util.Random;
 
 
 public class Function {
-    private static int APPROX_DEPTH = 10000;
-    private static double ROUNDING_DIST = 0.0001;
-    private static double ROUNDING_CONST = 1000.0;
+    private static final int APPROX_DEPTH = 10000;
+    private static final double ROUNDING_DIST = 0.0001;
+    private static final double ROUNDING_CONST = 1000.0;
     private double[] coefficients;
 
+    // the constructor of the class, sets the coefficients array
     public Function(double[] coefficients) {
         this.coefficients = coefficients;
     }
@@ -19,41 +20,65 @@ public class Function {
         return coefficients.length - 1;
     }
     
+    // a method to get the coefficient of x^i in the function
+    public double getCoefficient(int i) {
+        if (i > getDegree())
+            return 0;
+        return coefficients[i];
+    }
+
+    // a method to get the string representation of a value
+    public String getStringRepr(double x) {
+        // remove the ".0" if x is an integer
+        return ((x == Math.round(x))? ("" + Math.round(x)):("" + x));
+    }
+    
     // representation of the function, printed user-friendly
     public String toString() {
-        if (getDegree() == 0)
-            return "" + coefficients[0];
+        int n = getDegree();
+
+        // if the function is constant, f(x) = coefficients[0]
+        if (n == 0) {
+            if (coefficients[0] == Math.round(coefficients[0]))
+                return "" + Math.round(coefficients[0]);
+            return "" + smartRound(coefficients[0]);
+        }
         
-        String repr = "f(x) = ";
-        String sign = (coefficients[getDegree()] < 0)? ("-"):("");
-        String xExpression = (getDegree() == 1)? ("x"):("x^" + getDegree());
+        double coefficient;
+        String repr = "", sign, xExpression, coeffRepr;
         
-        // if the coefficient is 1 or -1
-        double roundedCoeff = smartRounding(Math.abs(coefficients[getDegree()]));
-        if (roundedCoeff == 1)
-            repr += sign + xExpression;
-        else
-            repr += sign + roundedCoeff + "*" + xExpression;
-        
-        for (int i = getDegree() - 1; i >= 1; i--) {
+        for (int i = n; i >= 1; i--) {
             if (coefficients[i] == 0) continue;
             
             // add to repr the correct form of the coefficient * x ^ i
-            sign = (coefficients[i] < 0)? (" - "):(" + ");
+            if (i == n)
+                sign = (coefficients[i] < 0)? ("-"):("");
+            else
+                sign = (coefficients[i] < 0)? (" - "):(" + ");
             xExpression = (i == 1)? ("x"):("x^" + i);
 
-            // if the coefficient is 1 or -1
-            roundedCoeff = smartRounding(Math.abs(coefficients[i]));
-            if (roundedCoeff == 1)
-                repr += sign + xExpression;
-            else
-                repr += sign + roundedCoeff + "*" + xExpression;
+            // if the coefficient is 1 or -1, or an integer
+            coefficient = smartRound(Math.abs(coefficients[i]));
+            if (coefficient == 1) {
+                coeffRepr = "";
+            } else if (coefficient == Math.round(coefficient)) {
+                coeffRepr = "" + Math.abs(Math.round(coefficient));
+            } else {
+                coeffRepr = "" + coefficient;
+            }
+            
+            repr += (sign + coeffRepr + xExpression);
+
         }
 
-        // add the constant of the function to repr
+        // add the constant of the function to the representation
         if (coefficients[0] != 0) {
-            repr += (coefficients[0] < 0)? (" - "):(" + ");
-            repr += smartRounding(Math.abs(coefficients[0]));
+            sign = (coefficients[0] < 0)? (" - "):(" + ");
+            if (coefficients[0] == Math.round(coefficients[0]))
+                coeffRepr = "" + Math.abs(Math.round(coefficients[0]));
+            else
+                coeffRepr = "" + Math.abs(smartRound(coefficients[0]));
+            repr += (sign + coeffRepr);
         }
         
         return repr;
@@ -71,16 +96,19 @@ public class Function {
 
     // a method to get the derivative of the function
     public Function calcDerivative() {
+        if (this.getDegree() == 0)
+            return new Function(new double[] {0});
+        
         double[] derCoeffs = new double[coefficients.length - 1];
 		for (int i = 0; i < derCoeffs.length; i++)
-			derCoeffs[i] = (i + 1) * coefficients[i + 1];
+			derCoeffs[i] = smartRound((i + 1) * coefficients[i + 1]);
 		return new Function(derCoeffs);
 	}
 
     // —————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     // a method that returns a rounded value of the parameter without changing it
-    public double smartRounding(double value) {
+    public double smartRound(double value) {
         if (Math.abs(Math.round(value) - value) < ROUNDING_DIST)
             return Math.round(value);
         return Math.round(value * ROUNDING_CONST) / ROUNDING_CONST;
@@ -94,20 +122,19 @@ public class Function {
     }
 
     // a method to get a sorted copy of an array without repetition of elements
-    public double[] modifyArray(double[] array, boolean round) {
+    public double[] modifyArray(double[] array) {
         double[] result = new double[array.length];
         int newLength = 0;
         boolean zeroAppeared = false;
 
-        for (int i = 0; i < array.length; i++) {
+        for (double x : array) {
             // special case because the default value of double is 0
-            if (array[i] == 0 && !zeroAppeared) {
+            if (x == 0 && !zeroAppeared) {
                 zeroAppeared = true; newLength++;
             }
             // if the element didn't appear yet (and is not 0)
-            else if (indexInArray(result, array[i]) == -1) {
-                result[newLength] = (round)? (smartRounding(array[i])):(array[i]);
-                newLength++;
+            else if (indexInArray(result, x) == -1) {
+                result[newLength] = x; newLength++;
             }
         }
         
@@ -135,12 +162,12 @@ public class Function {
         for (int i = 0; i < APPROX_DEPTH; i++) {
             next = current - this.calcValue(current) / derivative.calcValue(current);
             current = next;
-        } return next;
+        } return smartRound(next);
     }
 
 
     /* a method to compute the division of f(x) by the factor (x - alpha), ignoring the remainder.
-     * the division works for any parameter but it is used only when alpha is a root of the function.
+     * the division works for any parameter, but it is used only when alpha is a root of the function.
      */
     public double[] polynomialDivision(double alpha) {
         return polDivRec(this.coefficients, -alpha, new double[getDegree()]);
@@ -196,8 +223,10 @@ public class Function {
      * therefore, we can compute this root using the Newton-Raphson technique.
      */
     public double[] findRootsOdd() {
-        if (getDegree() == 1)
-            return new double[] {-coefficients[0] / coefficients[1]};
+        if (getDegree() == 1) {
+            double root = -coefficients[0] / coefficients[1];
+            return new double[] {smartRound(root)};
+        }
         return getRootsWhenExists(newtonRaphson());
     }
 
@@ -210,7 +239,7 @@ public class Function {
      * root of the function, because there are positive and negative values of the function.
      */
     public double[] findRootsEven() {
-        // the extrema points of the function are roots of the derivative
+        // the extrema points of the function are the roots of the derivative
         double[] extremaPoints = this.calcDerivative().findRoots();
         double root = 0; boolean existsRoot = false;
         
@@ -254,7 +283,7 @@ public class Function {
 
     // —————————————————————————————————————————————————————————————————————————————————————————————————————————————
     
-    /* a method to get the positive and negative intervals of f(x), where points contains the zero-points of f(x)
+    /* a method to get the positive/negative intervals of f(x), where points contains the zero-points of f(x)
      * for example: f(x) = 6x³ - 41x² + 59x - 20, so points = [0.5, 1.33, 5.0].
      * we substitute a random value between every two points and check if f(x) is positive or negative:
      * 
@@ -262,42 +291,27 @@ public class Function {
      *  _____|_____|_____|_____
      *    -  |  +  |  -  |  +  
      * 
-     * so the result will be the following two-dimensional array:
-     * [["0.5 < x < 1.33", "x > 5.0"], ["x < 0.5", "1.33 < x < 5.0"]]
+     * we will represent the sign of each interval using -1 or 1, so for this example we get [-1, 1, -1, 1]
      */
-    public String[][] calcIntervals(double[] points) {
-        String[] positives = new String[points.length];
-        String[] negatives = new String[points.length];
-        int numOfPos = 0; int numOfNeg = 0;
+    public int[] calcIntervals(double[] points) {
+        if (points.length == 0)
+            return (new int[] {(getCoefficient(0) > 0)? (1):(-1)});
         
-        points = modifyArray(points, false);
-        String interval; double substitue;
+        points = modifyArray(points);
+        int[] intervals = new int[points.length + 1];
+        double substitue;
 
         for (int i = 0; i <= points.length; i++) {
             // check the interval type and set the substitution accordingly
-            if (i == 0) {
-                interval = ("x < " + smartRounding(points[i]));
-                substitue = points[i] - 1;
-            } else if (i == points.length) {
-                interval = "x > " + smartRounding(points[i - 1]);
-                substitue = points[i - 1] + 1;
-            } else {
-                interval = (smartRounding(points[i - 1]) + " < x < " + smartRounding(points[i]));
-                substitue = (points[i - 1] + points[i]) / 2.0;
-            }
+            if (i == 0) substitue = points[i] - 1;
+            else if (i == points.length) substitue = points[i - 1] + 1;
+            else substitue = (points[i - 1] + points[i]) / 2.0;
 
-            // check the sign of the substitution and add the interval to the correct array
-            if (calcValue(substitue) > 0) {
-                positives[numOfPos] = interval; numOfPos++;
-            } else {
-                negatives[numOfNeg] = interval; numOfNeg++;
-            }
+            // check the sign of the substitution and set 1 or -1
+            intervals[i] = (calcValue(substitue) > 0)? (1):(-1);
         }
 
-        // slice the arrays to the correct length and return
-        positives = Arrays.copyOf(positives, numOfPos);
-        negatives = Arrays.copyOf(negatives, numOfNeg);
-        return (new String[][] {positives, negatives});
+        return intervals;
     }
 
 }
