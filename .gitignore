@@ -1,2 +1,4 @@
+# ignore the project documentation
+*.png
 *.docx
 *.pdf

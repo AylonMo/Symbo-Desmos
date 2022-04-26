@@ -22,15 +22,7 @@ public class Function {
     
     // a method to get the coefficient of x^i in the function
     public double getCoefficient(int i) {
-        if (i > getDegree())
-            return 0;
-        return coefficients[i];
-    }
-
-    // a method to get the string representation of a value
-    public String getStringRepr(double x) {
-        // remove the ".0" if x is an integer
-        return ((x == Math.round(x))? ("" + Math.round(x)):("" + x));
+        return (i > getDegree())? (0):(coefficients[i]);
     }
     
     // representation of the function, printed user-friendly
@@ -68,7 +60,6 @@ public class Function {
             }
             
             repr += (sign + coeffRepr + xExpression);
-
         }
 
         // add the constant of the function to the representation
@@ -114,33 +105,27 @@ public class Function {
         return Math.round(value * ROUNDING_CONST) / ROUNDING_CONST;
     }
 
-    // helper method to get the index of the first appearance of an element in an array
-    public int indexInArray(double[] array, double value) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == value) return i;
-        } return -1;    // return -1 if the element wasn't found
-    }
-
     // a method to get a sorted copy of an array without repetition of elements
     public double[] modifyArray(double[] array) {
-        double[] result = new double[array.length];
+        if (array.length == 0 || array.length == 1)
+            return array;
+        
+        // create a sorted copy of array
+        double[] sorted = Arrays.copyOf(array, array.length);
+        Arrays.sort(sorted);
+        
+        double[] result = new double[sorted.length];
         int newLength = 0;
-        boolean zeroAppeared = false;
 
-        for (double x : array) {
-            // special case because the default value of double is 0
-            if (x == 0 && !zeroAppeared) {
-                zeroAppeared = true; newLength++;
-            }
-            // if the element didn't appear yet (and is not 0)
-            else if (indexInArray(result, x) == -1) {
-                result[newLength] = x; newLength++;
-            }
+        // go over the sorted array and put every element in result once
+        for (int i = 0; i < sorted.length - 1; i++) {
+            if (sorted[i] != sorted[i + 1])
+                result[newLength++] = sorted[i];
         }
         
-        // slice the array to the correct length and sort it
-        result = Arrays.copyOf(result, newLength);
-        Arrays.sort(result); return result;
+        // add the last element, slice the array and return
+        result[newLength++] = sorted[sorted.length - 1];
+        return Arrays.copyOf(result, newLength);
     }
 
     // —————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -295,7 +280,7 @@ public class Function {
      */
     public int[] calcIntervals(double[] points) {
         if (points.length == 0)
-            return (new int[] {(getCoefficient(0) > 0)? (1):(-1)});
+            return (new int[] {(getCoefficient(getDegree()) > 0)? (1):(-1)});
         
         points = modifyArray(points);
         int[] intervals = new int[points.length + 1];

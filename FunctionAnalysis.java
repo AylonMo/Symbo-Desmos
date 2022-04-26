@@ -8,14 +8,11 @@ public class FunctionAnalysis {
 
     // the constructor of the class, asks for the degree and coefficients and sets func accordingly
 	public FunctionAnalysis() {
-        System.out.println("\n-----------------------------------------------------------------"
-                    + "-----------------------------------------------------------------\n");
+        System.out.println("\n----------------------------------------------------------------------------------------------\n");
         System.out.println("Welcome to our \"Symbo-Desmos\" Program!");
+		System.out.println("The program will analyze a polynomial function that will be set by the coefficients you enter.");
 
-		System.out.println("The program will perform a full analysis of a polynomial function of any "
-				    + "degree, which will be set by the coefficients you enter.\n");
-
-		System.out.println("The program will return the following data about the function:\n"
+		System.out.println("\nThe program will return the following data about the function:\n"
 				    + "    1. The domain of the function.\n"
 				    + "    2. Intersection points with the x axis & the y axis.\n"
 				    + "    3. Positivity & negativity intervals of f(x).\n"
@@ -24,8 +21,7 @@ public class FunctionAnalysis {
 				    + "    6. The 2nd derivative, f''(x), and inflection points of the function.\n"
 				    + "    7. Concavity & convexity intervals of f(x).");
         
-        System.out.println("\n-----------------------------------------------------------------"
-                    + "-----------------------------------------------------------------\n");
+        System.out.println("\n----------------------------------------------------------------------------------------------\n");
 
         int degree = getDegree();
         double[] coefficients = new double[degree + 1];
@@ -62,8 +58,8 @@ public class FunctionAnalysis {
             return (new String[][] {positives, negatives});
         }
         
-        String[] positives = new String[points.length];
-        String[] negatives = new String[points.length];
+        String[] positives = new String[points.length + 1];
+        String[] negatives = new String[points.length + 1];
         int numOfPos = 0; int numOfNeg = 0;
         
         String interval;
@@ -145,17 +141,9 @@ public class FunctionAnalysis {
 
     // ——————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
-    // a method to print the function and its domain
-    public void funcAndDomain() {
-        System.out.println("\n-----------------------------------------------------------------"
-                    + "-----------------------------------------------------------------\n");
-        System.out.println("f(x) = " + func);
-		System.out.println("Domain of the function: all x");
-    }
-
     // a method to print the intersection points of func with the axis
     public void axisIntersections(double[] intersectX) {
-        String intersectXMsg = "None";
+        String intersectXMsg = "none";
 
         // add the intersection points with the x axis to the string
         if (intersectX.length != 0) {
@@ -178,16 +166,18 @@ public class FunctionAnalysis {
         int[] signs = f.calcIntervals(roots);
         String[][] intervals = reprIntervals(roots, signs);
 
-        // get the intervals representation and remove the "[" and  "]"
-        String positive = Arrays.toString(intervals[0]);
-        String negative = Arrays.toString(intervals[1]);
-        positive = positive.substring(1, positive.length() - 1);
-        negative = negative.substring(1, negative.length() - 1);
+        // get the intervals representation
+        String positive = String.join(", ", intervals[0]);
+        String negative = String.join(", ", intervals[1]);
 
         // if f(x) = 0 then it is not positive nor negative for all x
         if (f.getDegree() == 0 && f.getCoefficient(0) == 0) {
             positive = "no x"; negative = "no x";
         }
+
+        // if there are no positive/negative intervals
+        if (positive.equals("")) positive = "none";
+        if (negative.equals("")) negative = "none";
 
         // assemble the message print it
         positive = positiveMsg + " intervals: " + positive;
@@ -231,14 +221,17 @@ public class FunctionAnalysis {
 
     // a method to print the extrema points of a function
     public void printExtremaPoints(double[] extremaPoints, String pointMsg) {
+        String printMsg = "";
         if (extremaPoints.length == 0) {
-            System.out.println(pointMsg + " points: " + "f(x) doesn't have " + pointMsg.toLowerCase() + " points");
+            printMsg = "none";
         } else {
             String[] message = new String[extremaPoints.length];
             for (int i = 0; i < message.length; i++)
                 message[i] = reprPoint(extremaPoints[i]);
-            System.out.println(pointMsg + " points: " + String.join(", ", message));
+            printMsg = String.join(", ", message);
         }
+
+        System.out.println(pointMsg + " points: " + printMsg);
     }
 
     // ——————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -251,13 +244,14 @@ public class FunctionAnalysis {
      *    which means f''(x) went from positivity to negativity (or the opposite).
      * 3. increasing/decreasing intervals of f(x) are the positivity/negativity intervals of f'(x), and concavity/
      *    convexity intervals of f(x) are the positivity/negativity intervals of f''(x).
-     * 4. inflection points of f(x) are the extrema points of f'(x). therefore, the concavity/convexity of f(x)
-     *    are the increasing/decreasing intervals of f'(x).
+     * 4. inflection points of f(x) are the extrema points of f'(x).
      */
     public void run() {
-        funcAndDomain();
+        System.out.println("\n----------------------------------------------------------------------------------------------\n");
+        System.out.println("The function: f(x) = " + func);
+		System.out.println("The domain of the function: all x");
 
-        // axis intersections and positivity/negativity intervals
+        // print axis intersections and positivity/negativity intervals
         double [] intersectX = func.modifyArray(func.findRoots());
         axisIntersections(intersectX);
         funcIntervals(func, intersectX, "Positivity", "Negativity");
@@ -265,7 +259,7 @@ public class FunctionAnalysis {
         // first derivative and extrema points
         Function firstDer = func.calcDerivative();
         double[][] extrema = extremaPoints(firstDer);
-        System.out.println("\nf'(x) = " + firstDer);
+        System.out.println("\nFirst derivative: f'(x) = " + firstDer);
         
         // print extrema points and increasing/decreasing intervals
         printExtremaPoints(extrema[1], "Minimum");
@@ -275,11 +269,13 @@ public class FunctionAnalysis {
         // second derivative and inflection points
         Function secondDer = firstDer.calcDerivative();
         double[] infPoints = extremaPoints(secondDer)[0];
-        System.out.println("\nf''(x) = " + secondDer);
+        System.out.println("\nSecond derivative: f''(x) = " + secondDer);
 
         // print inflection points and concavity/convexity intervals
         printExtremaPoints(infPoints, "Inflection");
         funcIntervals(secondDer, infPoints, "Concavity", "Convexity");
+
+        System.out.println("\n----------------------------------------------------------------------------------------------\n");
     }
 
 }
