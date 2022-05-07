@@ -119,7 +119,7 @@ public class Function {
 
         // go over the sorted array and put every element in result once
         for (int i = 0; i < sorted.length - 1; i++) {
-            if (sorted[i] != sorted[i + 1])
+            if (smartRound(sorted[i]) != smartRound(sorted[i + 1]))
                 result[newLength++] = sorted[i];
         }
         
