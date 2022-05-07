@@ -35,7 +35,7 @@ public class FunctionAnalysis {
 
     // a method to get the string representation of a value
     public String getStringRepr(double x) {
-        // remove the ".0" if x is an integer
+        x = func.smartRound(x);
         return ((x == Math.round(x))? ("" + Math.round(x)):("" + x));
     }
     

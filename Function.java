@@ -147,7 +147,7 @@ public class Function {
         for (int i = 0; i < APPROX_DEPTH; i++) {
             next = current - this.calcValue(current) / derivative.calcValue(current);
             current = next;
-        } return smartRound(next);
+        } return next;
     }
 
 
@@ -208,10 +208,8 @@ public class Function {
      * therefore, we can compute this root using the Newton-Raphson technique.
      */
     public double[] findRootsOdd() {
-        if (getDegree() == 1) {
-            double root = -coefficients[0] / coefficients[1];
-            return new double[] {smartRound(root)};
-        }
+        if (getDegree() == 1)
+            return (new double[] {-coefficients[0] / coefficients[1]});
         return getRootsWhenExists(newtonRaphson());
     }
 
