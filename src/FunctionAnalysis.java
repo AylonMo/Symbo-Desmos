@@ -1,12 +1,18 @@
-import java.util.Scanner;
+package src;
+
+import src.plotting.ContinuousFunctionPlotter;
+import src.plotting.Graph;
+import src.plotting.PlotSettings;
+import src.swing.GraphApplication;
+
 import java.util.Arrays;
+import java.awt.Color;
 
 
 public class FunctionAnalysis {
-    private static Scanner scan = new Scanner(System.in);
 	private Function func;
 
-    // the constructor of the class, asks for the degree and coefficients and sets func accordingly
+    // the constructor of the class, initializes func using the first constructor of Function
 	public FunctionAnalysis() {
         System.out.println("\n----------------------------------------------------------------------------------------------\n");
         System.out.println("Welcome to our \"Symbo-Desmos\" Program!");
@@ -22,26 +28,21 @@ public class FunctionAnalysis {
 				    + "    7. Concavity & convexity intervals of f(x).");
         
         System.out.println("\n----------------------------------------------------------------------------------------------\n");
-
-        int degree = getDegree();
-        double[] coefficients = new double[degree + 1];
-        
-        for (int i = 0; i <= degree; i++)
-            coefficients[i] = getCoefficient(degree, i);
-		this.func = new Function(coefficients);
+        this.func = new Function();
 	}
 
-    // ——————————————————————————————————————————————————————————————————————————————————————————————————————————————
+    // ______________________________________________________________________________________________________________
+    // ______________________________________________________________________________________________________________
 
     // a method to get the string representation of a value
     public String getStringRepr(double x) {
-        x = func.smartRound(x);
+        x = Function.smartRound(x);
         return ((x == Math.round(x))? ("" + Math.round(x)):("" + x));
     }
     
     // a method to represent a point in the form (x, f(x))
     public String reprPoint(double x) {
-        double y = func.smartRound(func.calcValue(x));
+        double y = Function.smartRound(func.calcValue(x));
         return "(" + getStringRepr(x) + ", " + getStringRepr(y) + ")";
 	}
     
@@ -50,12 +51,12 @@ public class FunctionAnalysis {
      * for example: if points = [0.5, 1.33, 5.0] and signs = [-1, 1, -1, 1] then the output will be the following
      * two-dimensional array: [["0.5 < x < 1.33", "x > 5.0"], ["x < 0.5", "1.33 < x < 5.0"]].
      */
-    public String[][] reprIntervals(double[] points, int[] signs) {
+    public IntervalsReprHelper reprIntervals(double[] points, int[] signs) {
         // if points is empty then func is a constant
         if (points.length == 0) {
             String[] positives = new String[] {(signs[0] > 0)? ("all x"):("no x")};
             String[] negatives = new String[] {(signs[0] > 0)? ("no x"):("all x")};
-            return (new String[][] {positives, negatives});
+            return new IntervalsReprHelper(positives, negatives);
         }
         
         String[] positives = new String[points.length + 1];
@@ -84,62 +85,20 @@ public class FunctionAnalysis {
         // slice the arrays to the correct length and return
         positives = Arrays.copyOf(positives, numOfPos);
         negatives = Arrays.copyOf(negatives, numOfNeg);
-        return (new String[][] {positives, negatives});
+        return new IntervalsReprHelper(positives, negatives);
     }
 
-    // ——————————————————————————————————————————————————————————————————————————————————————————————————————————————
+    public class IntervalsReprHelper {
+        private final String[] positives, negatives;
 
-    // a method to get a valid integer for the degree of the polynomial
-    public int getDegree() {
-		boolean invalidInput = true;
-        int degree = 0;
-        System.out.print("Please enter the degree of the polynomial function to analyze: ");
-
-        while (invalidInput) {
-            String input = scan.nextLine();
-            try {
-                degree = Integer.parseInt(input);
-                if (degree < 0)
-                    System.out.print("This is not a valid value. Please enter a positive integer for the degree: ");
-                else
-                    invalidInput = false;
-            } catch (NumberFormatException e) {
-                System.out.print("This is not a valid value. Please enter a positive integer for the degree: ");
-            }
+        public IntervalsReprHelper(String[] pos, String[] neg) {
+            this.positives = pos;
+            this.negatives = neg;
         }
-        
-        return degree;
     }
 
-    // a method to get a valid number for a coefficient of the function
-	public double getCoefficient(int degree, int coeffIndex) {
-		double coefficient = 0;
-		boolean invalidInput = true;
-
-		if (coeffIndex == 0)
-			System.out.print("Please enter the value of a0, the constant of the function: ");
-		else if (coeffIndex == 1)
-			System.out.print("Please enter the value of a1, the coefficient of x: ");
-		else
-			System.out.print("Please enter the value of a" + coeffIndex + ", the coefficient of x^" + coeffIndex + ": ");
-
-		while (invalidInput) {
-            String input = scan.nextLine();
-            try {
-                coefficient = Double.parseDouble(input);
-                if (coeffIndex == degree && coefficient == 0 && degree != 0)
-                    System.out.print("This is not a valid value. Please enter a non-zero value for this coefficient: ");
-                else
-                    invalidInput = false;
-            } catch (NumberFormatException e) {
-                System.out.print("This is not a valid value. Please enter a number to represent the coefficient: ");
-            }
-		}
-        
-        return coefficient;
-	}
-
-    // ——————————————————————————————————————————————————————————————————————————————————————————————————————————————
+    // ______________________________________________________________________________________________________________
+    // ______________________________________________________________________________________________________________
 
     // a method to print the intersection points of func with the axis
     public void axisIntersections(double[] intersectX) {
@@ -164,11 +123,11 @@ public class FunctionAnalysis {
     // a method to get and print the positive and negative intervals of a function
     public void funcIntervals(Function f, double[] roots, String positiveMsg, String negativeMsg) {
         int[] signs = f.calcIntervals(roots);
-        String[][] intervals = reprIntervals(roots, signs);
+        IntervalsReprHelper intervals = reprIntervals(roots, signs);
 
         // get the intervals representation
-        String positive = String.join(", ", intervals[0]);
-        String negative = String.join(", ", intervals[1]);
+        String positive = String.join(", ", intervals.positives);
+        String negative = String.join(", ", intervals.negatives);
 
         // if f(x) = 0 then it is not positive nor negative for all x
         if (f.getDegree() == 0 && f.getCoefficient(0) == 0) {
@@ -186,9 +145,9 @@ public class FunctionAnalysis {
     }
     
     // a method to get the extrema points of a function, minimum or maximum
-    public double[][] extremaPoints(Function f) {
-        double[] roots = f.modifyArray(f.findRoots());
-        double[] extremaPoints = new double[roots.length];
+    public ExtremaPointsHelper extremaPoints(Function f) {
+        double[] roots = Function.modifyArray(f.findRoots());
+        double[] allPoints = new double[roots.length];
 
         double[] minPoints = new double[roots.length];
         double[] maxPoints = new double[roots.length];
@@ -201,7 +160,7 @@ public class FunctionAnalysis {
             int[] signs = f.calcIntervals(roots);
             for (int i = 0; i < signs.length - 1; i++) {
                 if (signs[i] == signs[i + 1]) continue;
-                extremaPoints[numOfMin + numOfMax] = roots[i];
+                allPoints[numOfMin + numOfMax] = roots[i];
 
                 // check the extrema point's type (min/max)
                 if (signs[i] < signs[i + 1]) {
@@ -213,10 +172,20 @@ public class FunctionAnalysis {
         }
 
         // slice the arrays in the correct length and return
-        extremaPoints = Arrays.copyOf(extremaPoints, numOfMin + numOfMax);
         minPoints = Arrays.copyOf(minPoints, numOfMin);
         maxPoints = Arrays.copyOf(maxPoints, numOfMax);
-        return (new double[][] {extremaPoints, minPoints, maxPoints});
+        allPoints = Arrays.copyOf(allPoints, numOfMin + numOfMax);
+        return new ExtremaPointsHelper(minPoints, maxPoints, allPoints);
+    }
+
+    public class ExtremaPointsHelper {
+        private final double[] minPoints, maxPoints, allPoints;
+
+        public ExtremaPointsHelper(double[] min, double[] max, double[] all) {
+            this.minPoints = min;
+            this.maxPoints = max;
+            this.allPoints = all;
+        }
     }
 
     // a method to print the extrema points of a function
@@ -234,7 +203,8 @@ public class FunctionAnalysis {
         System.out.println(pointMsg + " points: " + printMsg);
     }
 
-    // ——————————————————————————————————————————————————————————————————————————————————————————————————————————————
+    // ______________________________________________________________________________________________________________
+    // ______________________________________________________________________________________________________________
 
     /* the main method of this class, prints to user the information & analysis of the function.
      * This method uses the following definitions and rules:
@@ -252,30 +222,57 @@ public class FunctionAnalysis {
 		System.out.println("The domain of the function: all x");
 
         // print axis intersections and positivity/negativity intervals
-        double [] intersectX = func.modifyArray(func.findRoots());
+        double [] intersectX = Function.modifyArray(func.findRoots());
         axisIntersections(intersectX);
         funcIntervals(func, intersectX, "Positivity", "Negativity");
 
         // first derivative and extrema points
         Function firstDer = func.calcDerivative();
-        double[][] extrema = extremaPoints(firstDer);
+        ExtremaPointsHelper extrema = extremaPoints(firstDer);
         System.out.println("\nFirst derivative: f'(x) = " + firstDer);
         
         // print extrema points and increasing/decreasing intervals
-        printExtremaPoints(extrema[1], "Minimum");
-        printExtremaPoints(extrema[2], "Maximum");
-        funcIntervals(firstDer, extrema[0], "Increasing", "Decreasing");
+        printExtremaPoints(extrema.minPoints, "Minimum");
+        printExtremaPoints(extrema.maxPoints, "Maximum");
+        funcIntervals(firstDer, extrema.allPoints, "Increasing", "Decreasing");
 
         // second derivative and inflection points
         Function secondDer = firstDer.calcDerivative();
-        double[] infPoints = extremaPoints(secondDer)[0];
+        ExtremaPointsHelper infPoints = extremaPoints(secondDer);
         System.out.println("\nSecond derivative: f''(x) = " + secondDer);
 
         // print inflection points and concavity/convexity intervals
-        printExtremaPoints(infPoints, "Inflection");
-        funcIntervals(secondDer, infPoints, "Concavity", "Convexity");
+        printExtremaPoints(infPoints.allPoints, "Inflection");
+        funcIntervals(secondDer, infPoints.allPoints, "Concavity", "Convexity");
 
         System.out.println("\n----------------------------------------------------------------------------------------------\n");
+        
+        new GraphApplication(graphFunction());
+    }
+
+    // ______________________________________________________________________________________________________________
+    // ______________________________________________________________________________________________________________
+
+    public class funcToGraph extends ContinuousFunctionPlotter {
+
+        public String getName() {
+            return "f(x)";
+        }
+
+        public double getY(double x) {
+            return func.calcValue(x);
+        }
+    }
+
+    public Graph graphFunction() {
+        PlotSettings p = new PlotSettings(-2, 2, -1, 1);
+        p.setPlotColor(Color.BLUE);
+        p.setGridSpacingX(1);
+        p.setGridSpacingY(1);
+
+        Graph graph = new Graph(p);
+        graph.functions.add(new funcToGraph());
+        return graph;
     }
 
 }
